@@ -157,7 +157,7 @@ button {
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  padding-bottom: 16px;
+  padding-bottom: 64px; /* keeps the fixed GitHub link clear of the controls */
 }
 
 .meta {
@@ -198,7 +198,7 @@ button {
 .board {
   position: relative;
   /* Full width on phones; shrink to fit short/landscape screens. */
-  width: min(100%, calc(100dvh - 250px));
+  width: min(100%, calc(100dvh - 350px));
   min-width: 280px;
   aspect-ratio: 1;
   touch-action: none;
@@ -375,6 +375,28 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
 
 .sheet-foot { display: flex; gap: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
 .credits { font-size: 0.7rem; margin: 10px 0 0; }
+
+/* ---------- GitHub link ---------- */
+
+.gh-link {
+  position: fixed;
+  right: calc(12px + env(safe-area-inset-right));
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 20;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  opacity: 0.8;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  transition: opacity 150ms;
+}
+.gh-link:hover, .gh-link:focus-visible { opacity: 1; }
+.gh-link svg { width: 22px; height: 22px; fill: currentColor; }
 
 /* ---------- promotion ---------- */
 

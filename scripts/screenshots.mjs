@@ -11,7 +11,7 @@ import { join } from 'node:path';
 const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const BASE = process.env.BASE || 'http://localhost:8765/';
 const PORT = 9333;
-const VIEWPORT = { width: 375, height: 690, deviceScaleFactor: 2, mobile: true };
+const VIEWPORT = { width: 375, height: 760, deviceScaleFactor: 2, mobile: true };
 const OUT = new URL('../docs/', import.meta.url);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
