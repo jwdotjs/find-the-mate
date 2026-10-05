@@ -202,7 +202,7 @@ function finish() {
   disableInput();
   const result = p.revealed ? RESULT.REVEALED : p.mistakes || p.hinted ? RESULT.ASSISTED : RESULT.CLEAN;
   store.record(depth, p.id, result);
-  const link = `<a href="https://lichess.org/training/${p.id}" target="_blank" rel="noopener">Analyse</a>`;
+  const link = `<a href="https://lichess.org/training/${p.id}" target="_blank" rel="noopener">Analyze</a>`;
   const msg = {
     [RESULT.CLEAN]: 'Checkmate! Clean solve.',
     [RESULT.ASSISTED]: 'Checkmate! Solved with help.',
