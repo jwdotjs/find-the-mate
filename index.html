@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1f2328">
+  <meta name="description" content="Spot the checkmate. Mate-in-1 to mate-in-10 puzzles, ordered from easy to hard.">
+  <title>Find the Mate</title>
+  <link rel="icon" href="img/pieces/wN.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="img/pieces/wN.svg">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="modulepreload" href="js/vendor/chess.js">
+</head>
+<body>
+  <header class="top">
+    <h1>Find the Mate</h1>
+    <div class="top-actions">
+      <button id="btn-progress" class="icon-btn" aria-label="All puzzles in this level">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>
+      </button>
+      <button id="btn-sound" class="icon-btn" aria-label="Sound on" aria-pressed="true">
+        <svg class="on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg>
+        <svg class="off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zm12.6 3 2.7-2.7-1.4-1.4-2.7 2.7-2.7-2.7-1.4 1.4 2.7 2.7-2.7 2.7 1.4 1.4 2.7-2.7 2.7 2.7 1.4-1.4z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <nav class="depths" id="depths" aria-label="Mate in"></nav>
+
+  <main class="play">
+    <div class="meta">
+      <div class="meta-left">
+        <span id="turn" class="turn"></span>
+        <span id="puzzle-num" class="muted"></span>
+      </div>
+      <span id="difficulty" class="pill"></span>
+    </div>
+
+    <div id="board" class="board" role="grid" aria-label="Chess board"></div>
+
+    <p id="status" class="status" aria-live="polite"></p>
+
+    <div class="controls">
+      <button id="btn-prev" class="btn" aria-label="Previous puzzle">‹</button>
+      <button id="btn-hint" class="btn">Hint</button>
+      <button id="btn-solution" class="btn">Solution</button>
+      <button id="btn-retry" class="btn" hidden>Retry</button>
+      <button id="btn-next" class="btn" aria-label="Next puzzle">›</button>
+    </div>
+
+    <div class="level-progress">
+      <div class="bar"><div id="bar-fill" class="bar-fill"></div></div>
+      <span id="level-count" class="muted"></span>
+    </div>
+  </main>
+
+  <dialog id="sheet" class="sheet">
+    <div class="sheet-head">
+      <h2 id="sheet-title"></h2>
+      <button class="icon-btn" id="sheet-close" aria-label="Close">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6l5.6-5.6L5 6.4z"/></svg>
+      </button>
+    </div>
+    <p class="legend">
+      <span><i class="dot s1"></i>Clean solve</span>
+      <span><i class="dot s2"></i>With mistakes / hint</span>
+      <span><i class="dot s3"></i>Solution viewed</span>
+    </p>
+    <div id="grid" class="grid"></div>
+    <div class="sheet-foot">
+      <button id="btn-reset-level" class="btn btn-quiet">Reset this level</button>
+      <button id="btn-reset-all" class="btn btn-quiet">Reset all progress</button>
+    </div>
+    <p class="credits muted">
+      Puzzles from the <a href="https://database.lichess.org/#puzzles" target="_blank" rel="noopener">Lichess puzzle database</a> (CC0).
+      Pieces by Colin M.L. Burnett (<a href="img/pieces/LICENSE" target="_blank" rel="noopener">BSD</a>).
+    </p>
+  </dialog>
+
+  <dialog id="promo" class="promo" aria-label="Promote to"></dialog>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

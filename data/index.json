@@ -1,0 +1,64 @@
+{
+ "depths": [
+  {
+   "depth": 1,
+   "count": 300,
+   "minRating": 504,
+   "maxRating": 2530
+  },
+  {
+   "depth": 2,
+   "count": 300,
+   "minRating": 550,
+   "maxRating": 2538
+  },
+  {
+   "depth": 3,
+   "count": 300,
+   "minRating": 568,
+   "maxRating": 2565
+  },
+  {
+   "depth": 4,
+   "count": 300,
+   "minRating": 785,
+   "maxRating": 2626
+  },
+  {
+   "depth": 5,
+   "count": 300,
+   "minRating": 1097,
+   "maxRating": 2581
+  },
+  {
+   "depth": 6,
+   "count": 300,
+   "minRating": 1081,
+   "maxRating": 2533
+  },
+  {
+   "depth": 7,
+   "count": 300,
+   "minRating": 1174,
+   "maxRating": 2926
+  },
+  {
+   "depth": 8,
+   "count": 69,
+   "minRating": 1351,
+   "maxRating": 2861
+  },
+  {
+   "depth": 9,
+   "count": 17,
+   "minRating": 1929,
+   "maxRating": 2939
+  },
+  {
+   "depth": 10,
+   "count": 4,
+   "minRating": 2063,
+   "maxRating": 2797
+  }
+ ]
+}
