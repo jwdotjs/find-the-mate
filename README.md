@@ -47,3 +47,7 @@ Change `TARGET_PER_DEPTH` in `scripts/build_puzzles.py` to adjust how many puzzl
 - Puzzles: [Lichess puzzle database](https://database.lichess.org/#puzzles), CC0
 - Pieces: Colin M.L. Burnett, via [Wikimedia Commons](https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces/Standard_transparent), BSD-3-Clause (`img/pieces/LICENSE`)
 - Move rules: [chess.js](https://github.com/jhlywa/chess.js), BSD-2-Clause (`js/vendor/chess.js.LICENSE`)
+
+## License
+
+Code is [MIT](LICENSE). Bundled third-party assets keep their own licenses (see Credits).
