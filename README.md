@@ -2,6 +2,14 @@
 
 Mobile-first checkmate trainer. Pick a depth (mate in 1 through mate in 10) and solve puzzles ordered from easiest to hardest. Static site, no build step, hosted on GitHub Pages.
 
+**▶ Play: [jwdotjs.github.io/find-the-mate](https://jwdotjs.github.io/find-the-mate/)**
+
+<p align="center">
+  <a href="https://jwdotjs.github.io/find-the-mate/"><img src="docs/puzzle.png" width="250" alt="A mate-in-1 puzzle with a piece selected and its legal moves shown"></a>
+  <a href="https://jwdotjs.github.io/find-the-mate/"><img src="docs/solved.png" width="250" alt="A solved mate-in-2 puzzle in dark mode"></a>
+  <a href="https://jwdotjs.github.io/find-the-mate/"><img src="docs/progress.png" width="250" alt="Progress grid showing solved puzzles in a level"></a>
+</p>
+
 ## Run locally
 
 ```bash
@@ -41,6 +49,14 @@ node scripts/validate.mjs
 ```
 
 Change `TARGET_PER_DEPTH` in `scripts/build_puzzles.py` to adjust how many puzzles each depth gets (currently 300). Lichess labels mates as `mateIn1` through `mateIn5`, where `mateIn5` means 5 or more, so the script works out the exact depth from the length of the solution. Mate in 8–10 puzzles are rare in the database: currently 69, 17 and 4.
+
+## Updating the screenshots
+
+With the local server running, this regenerates `docs/*.png` using headless Chrome. There are no npm dependencies.
+
+```bash
+CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" node scripts/screenshots.mjs
+```
 
 ## Credits
 
