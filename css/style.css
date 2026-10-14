@@ -59,6 +59,8 @@
 
 * { box-sizing: border-box; }
 
+[hidden] { display: none !important; }
+
 html, body { margin: 0; }
 
 body {
@@ -149,6 +151,7 @@ button {
 .depths button.complete:not(.active) { border-color: var(--s1); }
 .depths button.complete .n::after { content: " ✓"; font-size: 0.7rem; }
 .depths button:disabled { opacity: 0.4; cursor: default; }
+.depths button.mix { min-width: 58px; }
 
 /* ---------- play area ---------- */
 
@@ -175,6 +178,15 @@ button {
 .side.w { background: #fff; }
 .side.b { background: #222; }
 .muted { color: var(--muted); }
+.mate-in {
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  white-space: nowrap;
+}
 
 .pill {
   font-size: 0.78rem;
@@ -320,6 +332,40 @@ button {
 .bar { flex: 1; height: 6px; background: var(--s0); border-radius: 3px; overflow: hidden; }
 .bar-fill { height: 100%; width: 0; background: var(--s1); transition: width 300ms; }
 
+.delta { font-variant-numeric: tabular-nums; }
+
+.skill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 4px var(--gutter) 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  font-size: 0.8rem;
+}
+.skill::-webkit-scrollbar { display: none; }
+.skill-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font-variant-numeric: tabular-nums;
+}
+.chip .d { color: var(--muted); font-size: 0.72rem; }
+.chip.cur { border-color: var(--accent); }
+.chip .delta { font-size: 0.72rem; color: var(--muted); }
+
 /* ---------- puzzle sheet ---------- */
 
 dialog { color: var(--text); background: var(--surface); border: 0; padding: 0; }
@@ -372,6 +418,20 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
 .cell.s2 { background: var(--s2); color: #fff; }
 .cell.s3 { background: var(--s3); color: #fff; }
 .cell.cur { outline: 2px solid var(--text); outline-offset: 1px; }
+
+.skill-table { overflow-y: auto; padding-bottom: 8px; }
+.skill-table p { font-size: 0.85rem; margin: 4px 0 10px; }
+.skill-table .row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+.skill-table .row.cur .name { font-weight: 700; }
+.skill-table .name { min-width: 84px; }
+.skill-table .muted { flex: 1; font-size: 0.8rem; }
 
 .sheet-foot { display: flex; gap: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
 .credits { font-size: 0.7rem; margin: 10px 0 0; }

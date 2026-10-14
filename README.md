@@ -1,6 +1,6 @@
 # Find the Mate
 
-Mobile-first checkmate trainer. Pick a depth (mate in 1 through mate in 10) and solve puzzles ordered from easiest to hardest. Static site, no build step, hosted on GitHub Pages.
+Mobile-first checkmate trainer. Pick a depth (mate in 1 through mate in 10) and solve puzzles ordered from easiest to hardest, or play **Mix**: puzzles from every depth, matched to your level. Static site, no build step, hosted on GitHub Pages.
 
 **▶ Play: [jwdotjs.github.io/find-the-mate](https://jwdotjs.github.io/find-the-mate/)**
 
@@ -29,6 +29,7 @@ Settings → Pages → Source: "Deploy from a branch" → `main` / root. Every p
 | `index.html`, `css/style.css` | Layout; light/dark theme |
 | `js/app.js` | Puzzle flow: opponent's setup move, checking moves, hints, solution playback |
 | `js/board.js` | Touch board: tap-tap or drag, animations, highlights |
+| `js/skill.js` | Mix mode: rating per depth and puzzle picker |
 | `js/storage.js` | Progress in localStorage |
 | `js/sound.js` | Move/capture/check/mate sounds generated with the Web Audio API |
 | `js/vendor/chess.js` | [chess.js](https://github.com/jhlywa/chess.js) 1.4.0, for move rules |
@@ -36,9 +37,11 @@ Settings → Pages → Source: "Deploy from a branch" → `main` / root. Every p
 
 **Difficulty** is the Lichess puzzle rating, grouped into tiers: Beginner <1000, Easy <1400, Medium <1800, Hard <2200, Expert <2600, Master.
 
+**Mix mode** keeps a separate Elo-style rating for each depth, starting at 1200 (an unplayed depth borrows the rating of the nearest depth you have played). Each puzzle is picked near your rating at its depth, give or take 150, and the depth changes from puzzle to puzzle; shorter mates come up a little more often. A clean solve is a win, a hint is half, and a wrong move, skip or viewing the solution is a miss. Ratings move fast at first and settle after about 8 puzzles per depth. Mix solves count toward each level's progress too.
+
 **Correct moves:** each turn, the move in the puzzle line is accepted, and so is any move that checkmates immediately.
 
-**Progress** is saved under one localStorage key, `ftm:v1`, keyed by stable Lichess puzzle IDs. Adding, removing or re-sorting puzzles never breaks saved progress. Each solved puzzle costs about 10 bytes, so 10,000 solves is about 100KB of the roughly 5MB browsers allow.
+**Progress** (including Mix ratings) is saved under one localStorage key, `ftm:v1`, keyed by stable Lichess puzzle IDs. Adding, removing or re-sorting puzzles never breaks saved progress. Each solved puzzle costs about 10 bytes, so 10,000 solves is about 100KB of the roughly 5MB browsers allow.
 
 ## Adding or refreshing puzzles
 

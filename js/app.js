@@ -2,6 +2,7 @@ import { Chess } from './vendor/chess.js';
 import { Board } from './board.js';
 import { store, RESULT } from './storage.js';
 import { sound, unlockAudio, setSoundEnabled } from './sound.js';
+import { pick, rate, ratingFor, SCORE, PROVISIONAL } from './skill.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -16,13 +17,15 @@ const TIERS = [
 const COLOR_NAME = { w: 'White', b: 'Black' };
 const OPENING_DELAY = 550;
 const REPLY_DELAY = 400;
+const MIX = 'mix';
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const tierOf = (rating) => TIERS.findIndex(([max]) => rating < max);
 
 let depthsMeta = [];
 const cache = new Map(); // depth -> puzzles
-let depth = 1;
+let mode = 'level'; // 'level': one depth in order. MIX: adaptive, any depth.
+let depth = 1; // depth of the puzzle on the board
 let puzzles = [];
 let idx = 0;
 let p = null; // active puzzle state
@@ -105,13 +108,14 @@ function disableInput() {
 
 const movesLeft = () => (p.line.length - p.ply + 1) / 2;
 
-async function loadPuzzle(i) {
+async function loadPuzzle(i, { rated = false } = {}) {
   const my = ++session;
   idx = Math.max(0, Math.min(i, puzzles.length - 1));
   const [id, fen, moves, rating] = puzzles[idx];
   const game = new Chess(fen);
   p = {
     id,
+    depth,
     rating,
     game,
     line: moves.split(' '),
@@ -122,8 +126,10 @@ async function loadPuzzle(i) {
     hinted: false,
     revealed: false,
     done: false,
+    rated, // Mix mode: rating already updated for this puzzle
+    delta: null,
   };
-  store.setCurrent(depth, id);
+  if (mode !== MIX) store.setCurrent(depth, id);
 
   board.setOrientation(p.color === 'w' ? 'white' : 'black');
   disableInput();
@@ -184,12 +190,13 @@ async function onUserMove(from, to) {
 
   // Wrong: show the move briefly, then take it back.
   p.mistakes = true;
+  const delta = settle(SCORE.MISS);
   const prevLast = p.lastMove;
   p.game.move({ from, to, promotion });
   render([from, to]);
   board.setMarks({ wrong: to });
   sound.wrong();
-  setStatus('Not that one. Try again.', 'bad');
+  setStatus(`Not that one${delta === null ? '' : ` (${fmtDelta(delta)})`}. Try again.`, 'bad');
   await wait(650);
   if (my !== session) return;
   p.game.undo();
@@ -202,15 +209,59 @@ function finish() {
   disableInput();
   const result = p.revealed ? RESULT.REVEALED : p.mistakes || p.hinted ? RESULT.ASSISTED : RESULT.CLEAN;
   store.record(depth, p.id, result);
+  settle(p.revealed ? SCORE.MISS : p.hinted ? SCORE.HINTED : SCORE.WIN);
   const link = `<a href="https://lichess.org/training/${p.id}" target="_blank" rel="noopener">Analyze</a>`;
   const msg = {
     [RESULT.CLEAN]: 'Checkmate! Clean solve.',
     [RESULT.ASSISTED]: 'Checkmate! Solved with help.',
     [RESULT.REVEALED]: 'That’s the mate.',
   }[result];
-  setStatus(`${msg} ${link}`, result === RESULT.REVEALED ? '' : 'good');
+  const delta = p.delta === null ? '' : ` ${fmtDelta(p.delta)}`;
+  setStatus(`${msg}${delta} ${link}`, result === RESULT.REVEALED ? '' : 'good');
   setButtons();
   renderProgress();
+}
+
+// Mix mode: the first miss, or the finish, sets the rating change. Once per puzzle.
+function settle(score) {
+  if (mode !== MIX || p.rated) return null;
+  p.rated = true;
+  const { skill, delta } = rate(store.skills, depth, p.rating, score);
+  store.setSkill(depth, skill);
+  store.setMixCurrent(null);
+  p.delta = delta;
+  renderSkill();
+  return delta;
+}
+
+const fmtDelta = (d) => `<span class="delta">${d >= 0 ? '+' : '−'}${Math.abs(d)}</span>`;
+
+function next() {
+  if (mode !== MIX) return loadPuzzle(idx + 1);
+  if (p && !p.done && p.ply > 0) settle(SCORE.MISS); // skipping counts as a miss
+  nextMix();
+}
+
+function nextMix() {
+  const sets = new Map(depthsMeta.filter((d) => d.count).map((d) => [d.depth, cache.get(d.depth)]));
+  const choice = pick({
+    sets,
+    skills: store.skills,
+    lastDepth: p ? depth : null,
+    avoid: (d, id) => store.isRecent(id),
+    seen: (d, id) => store.result(d, id) !== undefined,
+  });
+  if (!choice) return setStatus('No puzzles left to serve.', 'bad');
+  loadMix(choice.depth, choice.puzzle[0]);
+}
+
+function loadMix(d, id, opts) {
+  depth = d;
+  puzzles = cache.get(d);
+  store.addRecent(id);
+  if (!opts?.rated) store.setMixCurrent({ d, id });
+  loadPuzzle(puzzles.findIndex(([x]) => x === id), opts);
+  renderSkill();
 }
 
 function hint() {
@@ -271,6 +322,9 @@ function renderMeta() {
   const t = tierOf(p.rating);
   $('turn').innerHTML = `<i class="side ${p.color}"></i>${COLOR_NAME[p.color]} to mate`;
   $('puzzle-num').textContent = `#${idx + 1} of ${puzzles.length}`;
+  $('puzzle-num').hidden = mode === MIX;
+  $('mate-in').textContent = `Mate in ${depth}`;
+  $('mate-in').hidden = mode !== MIX;
   const pill = $('difficulty');
   pill.textContent = `${TIERS[t][1]} · ${p.rating}`;
   pill.dataset.tier = t;
@@ -278,8 +332,13 @@ function renderMeta() {
 }
 
 function setButtons() {
+  const mix = mode === MIX;
+  const skip = mix && !p?.done;
+  $('btn-prev').hidden = mix;
   $('btn-prev').disabled = idx === 0;
-  $('btn-next').disabled = idx >= puzzles.length - 1;
+  $('btn-next').disabled = !mix && idx >= puzzles.length - 1;
+  $('btn-next').setAttribute('aria-label', skip ? 'Skip puzzle' : 'Next puzzle');
+  $('btn-next').title = skip ? 'Skip (counts as a miss)' : '';
   $('btn-next').classList.toggle('primary', !!p?.done);
   $('btn-hint').hidden = !!p?.done;
   $('btn-solution').hidden = !!p?.done;
@@ -289,6 +348,10 @@ function setButtons() {
 function renderDepths() {
   const nav = $('depths');
   nav.innerHTML =
+    `<button data-depth="${MIX}" class="mix" aria-label="Mix: puzzles from every depth, matched to your level">
+      <span class="n">Mix</span>
+      <span class="c">adaptive</span>
+    </button>` +
     '<span class="depths-label">Mate in</span>' +
     depthsMeta
       .map(
@@ -301,7 +364,7 @@ function renderDepths() {
       .join('');
   nav.onclick = (e) => {
     const btn = e.target.closest('button[data-depth]');
-    if (btn) selectDepth(Number(btn.dataset.depth));
+    if (btn) selectDepth(btn.dataset.depth === MIX ? MIX : Number(btn.dataset.depth));
   };
   for (const { depth: n } of depthsMeta) updateDepthCount(n);
 }
@@ -332,14 +395,29 @@ function nextUnsolved(from = 0) {
   return from;
 }
 
+function markActive(value) {
+  for (const b of document.querySelectorAll('#depths button')) {
+    const on = b.dataset.depth === String(value);
+    b.classList.toggle('active', on);
+    if (on) b.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+  }
+}
+
+function applyMode() {
+  const mix = mode === MIX;
+  $('level-progress').hidden = mix;
+  $('skill').hidden = !mix;
+  $('btn-progress').setAttribute('aria-label', mix ? 'Your ratings' : 'All puzzles in this level');
+}
+
 async function selectDepth(n) {
+  if (n === MIX) return selectMix();
   const my = ++session;
+  mode = 'level';
   depth = n;
   store.setSetting('depth', n);
-  for (const b of document.querySelectorAll('#depths button')) {
-    b.classList.toggle('active', Number(b.dataset.depth) === n);
-    if (Number(b.dataset.depth) === n) b.scrollIntoView({ inline: 'nearest', block: 'nearest' });
-  }
+  markActive(n);
+  applyMode();
   setStatus('Loading…');
   try {
     puzzles = await loadDepth(n);
@@ -354,7 +432,75 @@ async function selectDepth(n) {
   loadPuzzle(saved === -1 ? nextUnsolved(0) : nextUnsolved(saved));
 }
 
+async function selectMix() {
+  const my = ++session;
+  mode = MIX;
+  store.setSetting('depth', MIX);
+  markActive(MIX);
+  applyMode();
+  setStatus('Loading…');
+  try {
+    await Promise.all(depthsMeta.filter((d) => d.count).map((d) => loadDepth(d.depth)));
+  } catch (e) {
+    setStatus(`Couldn’t load puzzles. ${e.message}`, 'bad');
+    return;
+  }
+  if (my !== session) return;
+  // Resume an unfinished puzzle so reloading doesn't dodge a miss.
+  const cur = store.mixCurrent;
+  if (cur && cache.get(cur.d)?.some(([id]) => id === cur.id)) loadMix(cur.d, cur.id);
+  else nextMix();
+}
+
+function renderSkill() {
+  if (mode !== MIX) return;
+  const skills = store.skills;
+  const chips = depthsMeta
+    .filter(({ depth: d, count }) => count && (skills[d]?.n || d === depth))
+    .map(({ depth: d }) => {
+      const provisional = (skills[d]?.n ?? 0) < PROVISIONAL;
+      const delta = p?.depth === d && p.delta !== null ? fmtDelta(p.delta) : '';
+      return `<span class="chip${d === depth ? ' cur' : ''}" title="Mate in ${d}${provisional ? ' (provisional)' : ''}">
+        <span class="d">M${d}</span><b>${ratingFor(skills, d)}${provisional ? '?' : ''}</b>${delta}
+      </span>`;
+    })
+    .join('');
+  $('skill').innerHTML = `<span class="skill-label">Rating</span>${chips}`;
+}
+
+function renderSkillTable() {
+  const skills = store.skills;
+  $('sheet-title').textContent = 'Your rating by depth';
+  const rows = depthsMeta
+    .filter((d) => d.count)
+    .map(({ depth: d }) => {
+      const n = skills[d]?.n ?? 0;
+      const r = ratingFor(skills, d);
+      const t = tierOf(r);
+      return `<div class="row${d === depth ? ' cur' : ''}">
+        <span class="name">Mate in ${d}</span>
+        <span class="muted">${n ? `${n} played` : 'not played yet'}</span>
+        <span class="pill" data-tier="${t}">${TIERS[t][1]} · ${r}${n < PROVISIONAL ? '?' : ''}</span>
+      </div>`;
+    })
+    .join('');
+  $('skill-table').innerHTML =
+    `<p class="muted">Each depth has its own rating. It moves fast at first, then settles (the ? goes away after ${PROVISIONAL} puzzles). A wrong move, a skip or the solution counts as a miss; a hint counts as half.</p>` +
+    rows;
+}
+
 function openSheet() {
+  const mix = mode === MIX;
+  $('legend').hidden = mix;
+  $('grid').hidden = mix;
+  $('btn-reset-level').hidden = mix;
+  $('skill-table').hidden = !mix;
+  $('btn-reset-skill').hidden = !mix;
+  if (mix) {
+    renderSkillTable();
+    $('sheet').showModal();
+    return;
+  }
   const ids = puzzles.map((x) => x[0]);
   $('sheet-title').textContent = `Mate in ${depth} · ${store.solvedCount(depth, ids)}/${ids.length}`;
   let lastTier = -1;
@@ -374,8 +520,8 @@ function openSheet() {
 // ---------- events ----------
 
 $('btn-prev').onclick = () => loadPuzzle(idx - 1);
-$('btn-next').onclick = () => loadPuzzle(idx + 1);
-$('btn-retry').onclick = () => loadPuzzle(idx);
+$('btn-next').onclick = next;
+$('btn-retry').onclick = () => (mode === MIX ? loadMix(depth, p.id, { rated: true }) : loadPuzzle(idx));
 $('btn-hint').onclick = hint;
 $('btn-solution').onclick = showSolution;
 $('btn-progress').onclick = openSheet;
@@ -402,7 +548,14 @@ $('btn-reset-all').onclick = () => {
   $('sheet').close();
   for (const { depth: n } of depthsMeta) updateDepthCount(n);
   renderProgress();
-  loadPuzzle(0);
+  if (mode === MIX) nextMix();
+  else loadPuzzle(0);
+};
+$('btn-reset-skill').onclick = () => {
+  if (!confirm('Reset your Mix ratings for every depth?')) return;
+  store.resetSkills();
+  $('sheet').close();
+  nextMix();
 };
 
 function applySound(on) {
@@ -422,6 +575,10 @@ document.addEventListener('pointerdown', unlockAudio, { capture: true });
 document.addEventListener('keydown', (e) => {
   unlockAudio();
   if (document.querySelector('dialog[open]')) return;
+  if (mode === MIX) {
+    if (e.key === 'ArrowRight' && p?.done) next();
+    return;
+  }
   if (e.key === 'ArrowLeft' && idx > 0) loadPuzzle(idx - 1);
   if (e.key === 'ArrowRight' && idx < puzzles.length - 1) loadPuzzle(idx + 1);
 });
@@ -437,6 +594,7 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   renderDepths();
-  const start = depthsMeta.some((d) => d.depth === store.settings.depth && d.count) ? store.settings.depth : 1;
+  const saved = store.settings.depth;
+  const start = saved === MIX || depthsMeta.some((d) => d.depth === saved && d.count) ? saved : 1;
   selectDepth(start);
 })();

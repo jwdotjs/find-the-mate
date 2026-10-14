@@ -6,7 +6,11 @@
 //     settings: { sound: true, depth: 1 },
 //     cur:  { "2": "aB3dE" },               // last puzzle viewed per depth
 //     done: { "2": { "aB3dE": 1, ... } },   // result per puzzle ID
+//     skill: { "2": { r: 1350, n: 12 } },   // Mix mode rating and puzzles played per depth
+//     mix:  { cur: { d: 2, id: "aB3dE" }, recent: ["aB3dE", ...] },
 //   }
+//
+// settings.depth is a number, or "mix" for Mix mode.
 //
 // Results: 1 = clean solve, 2 = solved with a mistake or hint, 3 = solution viewed.
 // Only the best (lowest) result is kept.
@@ -16,11 +20,12 @@
 // Each solved puzzle costs ~10 bytes; 10,000 solves is ~100KB of a ~5MB quota.
 
 const KEY = 'ftm:v1';
+const RECENT = 40; // Mix mode won't repeat any of the last this-many puzzles
 
 export const RESULT = { CLEAN: 1, ASSISTED: 2, REVEALED: 3 };
 
 function empty() {
-  return { v: 1, settings: { sound: true, depth: 1 }, cur: {}, done: {} };
+  return { v: 1, settings: { sound: true, depth: 1 }, cur: {}, done: {}, skill: {}, mix: { cur: null, recent: [] } };
 }
 
 function load() {
@@ -29,7 +34,8 @@ function load() {
     if (!raw) return empty();
     const data = JSON.parse(raw);
     if (data?.v !== 1) return empty(); // future: migrate older versions here
-    return { ...empty(), ...data, settings: { ...empty().settings, ...data.settings } };
+    const base = empty();
+    return { ...base, ...data, settings: { ...base.settings, ...data.settings }, mix: { ...base.mix, ...data.mix } };
   } catch {
     return empty();
   }
@@ -89,6 +95,33 @@ export const store = {
   resetDepth(depth) {
     delete state.done[depth];
     delete state.cur[depth];
+    save();
+  },
+  get skills() {
+    return state.skill;
+  },
+  setSkill(depth, skill) {
+    state.skill[depth] = skill;
+    save();
+  },
+  resetSkills() {
+    state.skill = {};
+    state.mix = empty().mix;
+    save();
+  },
+  // The Mix puzzle in progress, so a reload resumes it instead of dodging a miss.
+  get mixCurrent() {
+    return state.mix.cur;
+  },
+  setMixCurrent(cur) {
+    state.mix.cur = cur;
+    save();
+  },
+  isRecent(id) {
+    return state.mix.recent.includes(id);
+  },
+  addRecent(id) {
+    state.mix.recent = [...state.mix.recent.filter((x) => x !== id), id].slice(-RECENT);
     save();
   },
   resetAll() {
