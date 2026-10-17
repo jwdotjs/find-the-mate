@@ -1,13 +1,13 @@
-# Find the Mate
+# Find the Checkmate
 
 Mobile-first checkmate trainer. Pick a depth (mate in 1 through mate in 10) and solve puzzles ordered from easiest to hardest, or play **Mix**: puzzles from every depth, matched to your level. Static site, no build step, hosted on GitHub Pages.
 
-**▶ Play: [jwdotjs.github.io/find-the-mate](https://jwdotjs.github.io/find-the-mate/)**
+**▶ Play: [jwdotjs.github.io/find-the-checkmate](https://jwdotjs.github.io/find-the-checkmate/)**
 
 <p align="center">
-  <a href="https://jwdotjs.github.io/find-the-mate/"><img src="docs/puzzle.png" width="250" alt="A mate-in-1 puzzle with a piece selected and its legal moves shown"></a>
-  <a href="https://jwdotjs.github.io/find-the-mate/"><img src="docs/solved.png" width="250" alt="A solved mate-in-2 puzzle in dark mode"></a>
-  <a href="https://jwdotjs.github.io/find-the-mate/"><img src="docs/progress.png" width="250" alt="Progress grid showing solved puzzles in a level"></a>
+  <a href="https://jwdotjs.github.io/find-the-checkmate/"><img src="docs/puzzle.png" width="250" alt="A mate-in-1 puzzle with a piece selected and its legal moves shown"></a>
+  <a href="https://jwdotjs.github.io/find-the-checkmate/"><img src="docs/solved.png" width="250" alt="A solved mate-in-2 puzzle in dark mode"></a>
+  <a href="https://jwdotjs.github.io/find-the-checkmate/"><img src="docs/progress.png" width="250" alt="Progress grid showing solved puzzles in a level"></a>
 </p>
 
 ## Run locally
